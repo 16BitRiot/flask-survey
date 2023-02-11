@@ -1,4 +1,4 @@
-from flask import Flask, redirect
+from flask import Flask, redirect, flash
 from surveys import Survey, Question
 
 app = Flask(__name__)
@@ -18,6 +18,24 @@ personality_quiz = Survey(
                  allow_text=True),
     ]
 )
+
+# this route checks to make sure that the question number is not outside of the survey length
+@app.route("/question/<int:question_number>/")
+def show_question(question_number):
+    if question_number >= len(personality_quiz.questions):
+        flash("Invalid request: that question does not exist.")
+        return redirect(url_for("goodbye"))
+    question = personality_quiz.questions[question_number]
+    question_html = f"<p>{question.question}</p>"
+    question_html += "<ul>"
+    for option in question.choices:
+        question_html += f"<li><a href='/response/{question_number}/{option}/'><button>{option}</button></a></li>"
+    question_html += "</ul>"
+    return f"""
+    <body>
+    {question_html}
+    </body>
+    """
 
 
 @app.route("/welcome")
@@ -118,8 +136,8 @@ def show_question4():
     question = personality_quiz.questions[3]
     question_html = f"<p>{question.question}</p>"
     question_html += "<ul>"
-    question_html += f"<li><a href='/response/4/yes/'><button>Yes</button></a></li>"
-    question_html += f"<li><a href='/response/4/no/'><button>No</button></a></li>"
+    for option in question.choices:
+        question_html += f"<li><a href='/response/4/{option}/'><button>{option}</button></a></li>"
     question_html += "</ul>"
 
     return f"""
@@ -127,6 +145,9 @@ def show_question4():
     {question_html}
     </body>
     """
+
+
+
 
 
 @app.route("/response/4/<response>/")
@@ -148,8 +169,13 @@ def add_response4(response):
         <li>{question3.question}: {responses[2]}</li>
         <li>{question4.question}: {responses[3]}</li>
     </ul>
+    <a href="/goodbye/">
+    <button>Exit Survey</button>
+    </a>    
     """
-
+@app.route("/goodbye/")
+def goodbye():
+    return "Thank you!"
 
 if __name__ == '__main__':
     app.run()
