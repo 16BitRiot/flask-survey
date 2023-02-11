@@ -2,6 +2,7 @@ from flask import Flask
 from surveys import Survey, Question
 
 app = Flask(__name__)
+responses = []
 
 personality_quiz = Survey(
     "Rithm Personality Test",
@@ -32,19 +33,23 @@ def show_survey():
 
     survey_html = f"<h1>{survey.title}</h1>"
     survey_html += f"<p>{survey.instructions}</p>"
+    survey_html += f"<a href="/question/1/"><button>Click here to get started!</button></a>"
 
-    for question in survey.questions:
-        survey_html += f"<p>{question.question}</p>"
-        survey_html += "<ul>"
-        for choice in question.choices:
-            survey_html += f"<li>{choice}</li>"
-        survey_html += "</ul>"
+    # for question in survey.questions:
+    #     survey_html += f"<p>{question.question}</p>"
+    #     survey_html += "<ul>"
+    #     for choice in question.choices:
+    #         survey_html += f"<li>{choice}</li>"
+    #     survey_html += "</ul>"
 
     return f"""
         <body>
         {survey_html}
         </body>
     """
+@app.route("/question/1/")
+def show_question():
+    questions = 
 
 if __name__ == '__main__':
     app.run()
