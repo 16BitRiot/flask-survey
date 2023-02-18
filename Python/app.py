@@ -1,4 +1,4 @@
-from flask import Flask, redirect, flash
+from flask import Flask, redirect, flash, session, url_for, render_template
 from surveys import Survey, Question
 
 app = Flask(__name__)
@@ -19,33 +19,23 @@ personality_quiz = Survey(
     ]
 )
 
-# this route checks to make sure that the question number is not outside of the survey length
 @app.route("/question/<int:question_number>/")
 def show_question(question_number):
     if question_number >= len(personality_quiz.questions):
         flash("Invalid request: that question does not exist.")
         return redirect(url_for("goodbye"))
     question = personality_quiz.questions[question_number]
-    question_html = f"<p>{question.question}</p>"
-    question_html += "<ul>"
-    for option in question.choices:
-        question_html += f"<li><a href='/response/{question_number}/{option}/'><button>{option}</button></a></li>"
-    question_html += "</ul>"
-    return f"""
-    <body>
-    {question_html}
-    </body>
-    """
-
+    return render_template("question.html", question=question, question_number=question_number)
 
 @app.route("/welcome")
 def welcome():
-    return """
-        <body>
-        <h1>Welcome!</h1>
-        <a href="/survey/"><button>Take Survey</button></a>
-        </body>
-    """
+    return render_template("welcome.html")
+
+
+@app.route('/start_survey', methods=['POST'])
+def start_survey():
+    session['responses'] = []  # set session["responses"] to an empty list
+    return redirect(url_for('question', question_number=1))  # redirect to the start of the survey
 
 
 @app.route("/survey/")
