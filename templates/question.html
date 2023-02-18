@@ -1,9 +1,0 @@
-<body>
-    <p>{{ question.question }}</p>
-    <ul>
-    {% for option in question.choices %}
-        <li><a href='/response/{{ question_number }}/{{ option }}/'>
-        <button>{{ option }}</button></a></li>
-    {% endfor %}
-    </ul>
-</body>

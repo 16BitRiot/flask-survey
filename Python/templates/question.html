@@ -1,9 +1,14 @@
 <body>
     <p>{{ question.question }}</p>
+    {% if question.choices %}
     <ul>
-    {% for option in question.choices %}
-        <li><a href='/response/{{ question_number }}/{{ option }}/'>
-        <button>{{ option }}</button></a></li>
-    {% endfor %}
+        {% for choice in question.choices %}
+        <li><a href='/response/{{ question_number }}/{{ loop.index }}/'><button>{{ choice }}</button></a></li>
+        {% endfor %}
     </ul>
-</body>
+    {% else %}
+    <input type="text" name="text_response">
+    <a href='/response/{{ question_number }}/text/'><button>Submit</button></a>
+    {% endif %}
+    </body>
+    

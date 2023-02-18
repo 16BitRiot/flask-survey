@@ -1,23 +1,10 @@
 from flask import Flask, redirect, flash, session, url_for, render_template
-from surveys import Survey, Question
+from surveys import Survey, Question, personality_quiz as personality_quiz
 
 app = Flask(__name__, template_folder="templates")
+app.secret_key = "your_secret_key"
 
 responses = []
-
-personality_quiz = Survey(
-    "Rithm Personality Test",
-    "Learn more about yourself with our personality quiz!",
-    [
-        Question("Do you ever dream about code?"),
-        Question("Do you ever have nightmares about code?"),
-        Question("Do you prefer porcupines or hedgehogs?",
-                 ["Porcupines", "Hedgehogs"]),
-        Question("Which is the worst function name, and why?",
-                 ["do_stuff()", "run_me()", "wtf()"],
-                 allow_text=True),
-    ]
-)
 
 @app.route("/question/<int:question_number>/")
 def show_question(question_number):
@@ -32,140 +19,51 @@ def welcome():
     return render_template("welcome.html")
 
 
-@app.route('/start_survey', methods=['POST'])
+@app.route('/start_survey', methods=['GET', 'POST'])
 def start_survey():
     session['responses'] = []  # set session["responses"] to an empty list
-    return redirect(url_for('question', question_number=1))  # redirect to the start of the survey
+    return redirect(url_for('show_question', question_number=0))  # redirect to the start of the survey
+
+# @app.route('/start_survey', methods=['GET'])
+# def start_survey_get():
+#     return redirect(url_for('welcome'))
 
 
 @app.route("/survey/")
 def show_survey():
     survey = personality_quiz
-
-    survey_html = f"<h1>{survey.title}</h1>"
-    survey_html += f"<p>{survey.instructions}</p>"
-    survey_html += f"<a href='/question/1/'><button>Click here to get started!</button></a>"
-
-    return f"""
-        <body>
-        {survey_html}
-        </body>
-    """
+    return render_template("survey.html", survey=survey)
 
 
-@app.route("/question/1/")
-def show_question1():
-    question = personality_quiz.questions[0]
-    question_html = f"<p>{question.question}</p>"
-    question_html += "<ul>"
-    question_html += f"<li><a href='/response/1/yes/'><button>Yes</button></a></li>"
-    question_html += f"<li><a href='/response/1/no/'><button>No</button></a></li>"
-    question_html += "</ul>"
+@app.route("/response/<int:question_number>/<response>/")
+def handle_response(question_number, response):
+    try:
+        response = int(response)
+    except ValueError:
+        flash("Invalid response.")
+        return redirect(url_for("show_question", question_number=question_number))
 
-    return f"""
-    <body>
-    {question_html}
-    </body>
-    """
+    # update the responses stored in the session
+    session['responses'].append(response)
 
-
-@app.route("/response/1/<response>/")
-def add_response1(response):
-    responses.append(response)
-    return redirect(f"/question/2/")
+    # redirect to the next question or the completion page
+    if question_number + 1 < len(personality_quiz.questions):
+        return redirect(url_for('show_question', question_number=question_number + 1))
+    else:
+        return redirect(url_for('show_results'))
 
 
-@app.route("/question/2/")
-def show_question2():
-    question = personality_quiz.questions[1]
-    question_html = f"<p>{question.question}</p>"
-    question_html += "<ul>"
-    question_html += f"<li><a href='/response/2/yes/'><button>Yes</button></a></li>"
-    question_html += f"<li><a href='/response/2/no/'><button>No</button></a></li>"
-    question_html += "</ul>"
+@app.route("/results/", methods=['GET', 'POST'])
+def show_results():
+    # get the user's responses
+    responses = session.get('responses')
 
-    return f"""
-    <body>
-    {question_html}
-    </body>
-    """
+    # clear the responses from the session
+    session.pop('responses', None)
+
+    return render_template("results.html", responses=responses)
 
 
-@app.route("/response/2/<response>/")
-def add_response2(response):
-    responses.append(response)
-    print(response)
-    return redirect(f"/question/3/")
-
-
-@app.route("/question/3/")
-def show_question3():
-    question = personality_quiz.questions[2]
-    question_html = f"<p>{question.question}</p>"
-    question_html += "<ul>"
-    question_html += f"<li><a href='/response/3/porcupines/'><button>porcupines</button></a></li>"
-    question_html += f"<li><a href='/response/3/hedgehogs/'><button>hedgehogs</button></a></li>"
-    question_html += "</ul>"
-
-    return f"""
-    <body>
-    {question_html}
-    </body>
-    """
-
-
-@app.route("/response/3/<response>/")
-def add_response3(response):
-    responses.append(response)
-    print(response)
-    return redirect(f"/question/4/")
-
-
-@app.route("/question/4/")
-def show_question4():
-    question = personality_quiz.questions[3]
-    question_html = f"<p>{question.question}</p>"
-    question_html += "<ul>"
-    for option in question.choices:
-        question_html += f"<li><a href='/response/4/{option}/'><button>{option}</button></a></li>"
-    question_html += "</ul>"
-
-    return f"""
-    <body>
-    {question_html}
-    </body>
-    """
-
-
-
-
-
-@app.route("/response/4/<response>/")
-def add_response4(response):
-    responses.append(response)
-    print(response)
-    question1 = personality_quiz.questions[0]
-    question2 = personality_quiz.questions[1]
-    question3 = personality_quiz.questions[2]
-    question4 = personality_quiz.questions[3]
-
-
-    return f"""
-    You have completed the survey. Thank you for participating!
-
-    <ul>
-        <li>{question1.question}: {responses[0]}</li>
-        <li>{question2.question}: {responses[1]}</li>
-        <li>{question3.question}: {responses[2]}</li>
-        <li>{question4.question}: {responses[3]}</li>
-    </ul>
-    <a href="/goodbye/">
-    <button>Exit Survey</button>
-    </a>    
-    """
-@app.route("/goodbye/")
-def goodbye():
-    return "Thank you!"
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

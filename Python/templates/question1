@@ -1,0 +1,7 @@
+<body>
+<p>{{ question.question }}</p>
+<ul>
+    <li><a href='/response/1/1/'><button>Yes</button></a></li>
+    <li><a href='/response/1/2/'><button>No</button></a></li>
+</ul>
+</body>
