@@ -1,7 +1,7 @@
 from flask import Flask, redirect, flash, session, url_for, render_template
 from surveys import Survey, Question
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 
 responses = []
 
